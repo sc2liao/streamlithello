@@ -3,13 +3,13 @@ import sqlite3
 import pandas as pd
 import io  # <--- New library needed
 
-st.title("📦 BLOB Inventory Viewer")
+st.title("picture viewer")
 
 # Connect to the BLOB database
-conn = sqlite3.connect('inventory_blob.db')
+conn = sqlite3.connect('picture.db')
 c = conn.cursor()
 
-c.execute("SELECT name, count, image_data FROM tools")
+c.execute("SELECT name, image_data FROM tools")
 rows = c.fetchall()
 
 if not rows:
@@ -17,11 +17,10 @@ if not rows:
 else:
     for row in rows:
         name = row[0]
-        count = row[1]
-        image_data = row[2]  # This is raw binary data (bytes)
+        image_data = row[1]  # This is raw binary data (bytes)
 
         with st.container():
-            col1, col2 = st.columns([1, 3])
+            col1, col2 = st.columns([1, 2])
             
             with col1:
                 if image_data:
@@ -33,7 +32,6 @@ else:
             
             with col2:
                 st.subheader(name)
-                st.write(f"Quantity: {count}")
             
             st.divider()
 
