@@ -1,33 +1,40 @@
 import streamlit as st
+import sqlite3
 import pandas as pd
-import numpy as np
-import plotly.express as px
+import io  # <--- New library needed
 
-# Set page title
-st.set_page_config(page_title="Simple Data Dashboard")
-st.title("📊 Simple Python Web App")
+st.title("📦 BLOB Inventory Viewer")
 
-# Sidebar for user input
-st.sidebar.header("Settings")
-uploaded_file = st.sidebar.file_uploader("Upload your CSV file", type=["csv"])
+# Connect to the BLOB database
+conn = sqlite3.connect('inventory_blob.db')
+c = conn.cursor()
 
-# Logic to load data
-if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file)
+c.execute("SELECT name, count, image_data FROM tools")
+rows = c.fetchall()
+
+if not rows:
+    st.write("No items found.")
 else:
-    # Default sample data
-    df = pd.DataFrame(
-        np.random.randn(20, 3),
-        columns=['A', 'B', 'C']
-    )
-    st.info("Showing sample data. Upload a CSV in the sidebar to use your own!")
+    for row in rows:
+        name = row[0]
+        count = row[1]
+        image_data = row[2]  # This is raw binary data (bytes)
 
-# Display Data Table
-st.subheader("Data Preview")
-st.dataframe(df.head())
+        with st.container():
+            col1, col2 = st.columns([1, 3])
+            
+            with col1:
+                if image_data:
+                    # Convert bytes to an image stream
+                    image_stream = io.BytesIO(image_data)
+                    st.image(image_stream, width=100)
+                else:
+                    st.write("No Image")
+            
+            with col2:
+                st.subheader(name)
+                st.write(f"Quantity: {count}")
+            
+            st.divider()
 
-# Visualize Data
-st.subheader("Quick Visualization")
-column_to_plot = st.selectbox("Select column to visualize", df.columns)
-fig = px.histogram(df, x=column_to_plot, title=f"Distribution of {column_to_plot}")
-st.plotly_chart(fig)
+conn.close()
